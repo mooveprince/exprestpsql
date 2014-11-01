@@ -9,6 +9,9 @@ var routes = require('./routes/index');
 
 // DB Connection
 var pg = require('pg');
+var conString = process.env.DATABASE_URL || "postgres://local_admin:1661@localhost:5432/mydb";
+var client = new pg.Client(conString);
+client.connect();
 
 var app = express();
 
@@ -27,17 +30,33 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 
-app.get('/db', function (request, response) {
-  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+app.get('/userlist', function (request, response) {
     client.query('SELECT * FROM userlist', function(err, result) {
-      done();
       if (err)
        { console.error(err); response.send("Error " + err); }
       else
        { response.send(result.rows); }
     });
-  });
-})
+});
+
+app.post ('/adduser', function (request, response) {
+    var id = request.body.id;
+    var userName = request.body.userName;
+    var email = request.body.email;
+    var name = request.body.name;
+    var age = request.body.age;
+    var city = request.body.city;
+    var gender = request.body.gender;
+     
+    client.query ('INSERT into userlist (id, username, email, name, age, city, gender) VALUES ($1, $2, $3, $4, $5, $6, $7)', [id,userName,email,name,age,city,gender] , function (err, result) {
+        if (err) {
+            response.send(err);
+        } else {
+             response.send("Row Inserted..");
+        }
+    }); 
+});
+
 
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
